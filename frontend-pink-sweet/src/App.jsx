@@ -9,6 +9,8 @@ import flan         from "./assets/products/flan.jpg";
 import galletas     from "./assets/products/galletas.jpg";
 import gelatina     from "./assets/products/gelatina.jpg";
 import pastelImposible from "./assets/products/pastel_imposible.jpg";
+import cupcakecorazon from "./assets/products/cupcakecorazon.jpg";
+import mapa         from "./assets/products/mapa.jpg";
 import letra        from "./assets/products/letra.png";
 import logo         from "./assets/products/logo.png";
 
@@ -153,8 +155,16 @@ const globalCSS = `
   }
 `;
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("usuario")) || null;
+  } catch {
+    return null;
+  }
+};
+
 // ─── HEADER ──────────────────────────────────────────────
-function Header({ page, setPage, cartCount }) {
+function Header({ page, setPage, cartCount, user }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   return (
@@ -179,7 +189,9 @@ function Header({ page, setPage, cartCount }) {
               <i className="fa-solid fa-magnifying-glass"></i>
             </button>
           </div>
-          <a href="#" style={{ color:"#2d1a10", fontSize:17 }}><i className="fa-regular fa-user"></i></a>
+          <button onClick={() => setPage(user ? "perfil" : "login")} style={{ background:"none", border:"none", padding:0, margin:0, color:"#2d1a10", fontSize:17, cursor:"pointer" }} title={user ? "Mi Perfil" : "Iniciar sesión"}>
+            <i className="fa-regular fa-user"></i>
+          </button>
           <a href="#" style={{ position:"relative", color:"#2d1a10", fontSize:17 }}>
             <i className="fa-solid fa-cart-shopping"></i>
             <span style={{ position:"absolute", top:-8, right:-8, background:"#c8506a", color:"#fff", borderRadius:"50%", width:17, height:17, fontSize:10, fontFamily:"'Lato',sans-serif", fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>{cartCount}</span>
@@ -377,6 +389,293 @@ function Inicio({ setPage }) {
   );
 }
 
+function LoginPage({ onLoginSuccess, setPage }) {
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!correo || !password) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:8081/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.mensaje || 'Correo o contraseña incorrectos.');
+      } else {
+        localStorage.setItem('usuario', JSON.stringify(data));
+        onLoginSuccess(data);
+        setPage('perfil');
+      }
+    } catch (err) {
+      setError('No se pudo conectar al servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main style={{ minHeight: 'calc(100vh - 68px)', background: '#fff0f2', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 1020, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 28, background: '#fff', borderRadius: 24, overflow: 'hidden', boxShadow: '0 18px 50px rgba(200,80,106,.16)' }}>
+        <div style={{ background: '#c8506a', color: '#fff', padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, marginBottom: 18 }}>Bienvenido a<br /><span style={{ fontSize: 42, fontWeight: 700 }}>Sweet Cream Rose</span></h2>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 16, lineHeight: 1.8 }}>Ingresa con tu correo y contraseña para acceder a tu perfil, pedidos y favoritos.</p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <img src={cupcakecorazon} alt="Cupcakes Sweet Cream Rose" style={{ width: '100%', maxWidth: 320, objectFit: 'cover', borderRadius: 18 }} />
+          </div>
+        </div>
+        <div style={{ padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 32, color: '#2d1a10', marginBottom: 14 }}>Iniciar Sesión</h2>
+          <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 14, color: '#7a4055', marginBottom: 24 }}>Accede con tu usuario registrado para gestionar tu perfil y pedidos.</p>
+          {error && <div style={{ marginBottom: 18, color: '#a82a3f', fontWeight: 700 }}>{error}</div>}
+          <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, outline: 'none' }} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 14, outline: 'none' }} />
+          <button className="scr-btn-primary" onClick={handleLogin} disabled={loading} style={{ width: '100%', textAlign: 'center' }}>{loading ? 'Verificando...' : 'Iniciar sesión'}</button>
+          <div style={{ marginTop: 18, fontFamily: "'Lato',sans-serif", fontSize: 14, color: '#7a4055', textAlign: 'center' }}>
+            ¿No tienes cuenta? <button onClick={() => setPage('registro')} style={{ background:'none', border:'none', color:'#c8506a', fontWeight:700, cursor:'pointer', padding:0 }}>Regístrate aquí</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function RegisterPage({ setPage }) {
+  const [nombre, setNombre] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+
+    if (!nombre || !correo || !password || !confirmPassword) {
+      setError('Completa todos los campos.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:8081/api/auth/registrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, correo, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.mensaje || 'No se pudo crear la cuenta.');
+      } else {
+        setMessage('Registro exitoso. Ahora puedes iniciar sesión.');
+        setNombre('');
+        setCorreo('');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      setError('No se pudo conectar al servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main style={{ minHeight: 'calc(100vh - 68px)', background: '#fff0f2', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 1020, display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 28, background: '#fff', borderRadius: 24, overflow: 'hidden', boxShadow: '0 18px 50px rgba(200,80,106,.16)' }}>
+        <div style={{ background: '#c8506a', color: '#fff', padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, marginBottom: 18 }}>Únete a<br /><span style={{ fontSize: 42, fontWeight: 700 }}>Sweet Cream Rose</span></h2>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 16, lineHeight: 1.8 }}>Crea tu cuenta para hacer pedidos, guardar favoritos y ver tu historial.</p>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <img src={cupcakecorazon} alt="Cupcakes Sweet Cream Rose" style={{ width: '100%', maxWidth: 320, objectFit: 'cover', borderRadius: 18 }} />
+          </div>
+        </div>
+        <div style={{ padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 32, color: '#2d1a10', marginBottom: 14 }}>Crear Cuenta</h2>
+          <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 14, color: '#7a4055', marginBottom: 24 }}>Regístrate con tu nombre, correo y contraseña.</p>
+          {error && <div style={{ marginBottom: 18, color: '#a82a3f', fontWeight: 700 }}>{error}</div>}
+          {message && <div style={{ marginBottom: 18, color: '#2d6a32', fontWeight: 700 }}>{message}</div>}
+          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre completo" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, outline: 'none' }} />
+          <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Correo electrónico" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, outline: 'none' }} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 16, fontSize: 14, outline: 'none' }} />
+          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Confirmar contraseña" style={{ width: '100%', border: '1px solid #f0d0d8', borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 14, outline: 'none' }} />
+          <button className="scr-btn-primary" onClick={handleRegister} disabled={loading} style={{ width: '100%', textAlign: 'center' }}>{loading ? 'Registrando...' : 'Crear cuenta'}</button>
+          <div style={{ marginTop: 18, fontFamily: "'Lato',sans-serif", fontSize: 14, color: '#7a4055', textAlign: 'center' }}>
+            ¿Ya tienes cuenta? <button onClick={() => setPage('login')} style={{ background:'none', border:'none', color:'#c8506a', fontWeight:700, cursor:'pointer', padding:0 }}>Inicia sesión</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function PerfilPage({ user, onLogout, onUpdateUser }) {
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [passwordActual, setPasswordActual] = useState('');
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const nombres = (user.nombre || '').split(' ');
+    setNombre(nombres.shift() || '');
+    setApellido(nombres.join(' ') || '');
+    setCorreo(user.correo || '');
+    setTelefono(user.telefono || '');
+  }, [user]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!user) return;
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ').trim();
+
+    try {
+      const datos = { nombre: nombreCompleto, telefono };
+      const res = await fetch(`http://localhost:8081/api/configuracion/actualizar-datos/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos),
+      });
+
+      if (!res.ok) {
+        setError('No se pudo actualizar la información.');
+        return;
+      }
+
+      if (nuevaPassword) {
+        if (!passwordActual) {
+          setError('Ingresa tu contraseña actual para cambiarla.');
+          return;
+        }
+        const passRes = await fetch(`http://localhost:8081/api/configuracion/cambiar-password/${user.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actual: passwordActual, nueva: nuevaPassword }),
+        });
+        if (!passRes.ok) {
+          const errorText = await passRes.text();
+          setError(errorText || 'No se pudo cambiar la contraseña.');
+          return;
+        }
+      }
+
+      const updatedUser = { ...user, nombre: nombreCompleto, telefono };
+      localStorage.setItem('usuario', JSON.stringify(updatedUser));
+      onUpdateUser(updatedUser);
+      setMessage('Perfil actualizado correctamente.');
+      setPasswordActual('');
+      setNuevaPassword('');
+    } catch (err) {
+      setError('Ocurrió un error al guardar los datos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main style={{ minHeight: 'calc(100vh - 68px)', background: '#fff0f2', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '320px 1fr', gap: 28 }}>
+        <aside style={{ background: '#fff', borderRadius: 22, padding: 28, boxShadow: '0 18px 45px rgba(200,80,106,.12)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ width: 120, height: 120, borderRadius: '50%', background: '#f5d8e0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+              <img src={logo} alt="Avatar" style={{ width: 68, height: 68, objectFit: 'contain' }} />
+            </div>
+            <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, color: '#2d1a10', marginBottom: 6 }}>{nombre ? `${nombre} ${apellido}`.trim() : 'Usuario'}</h3>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 14, color: '#7a4055' }}>{correo}</p>
+          </div>
+          <nav style={{ display: 'grid', gap: 10 }}>
+            {[
+              { label: 'Mi Cuenta', active: true },
+              { label: 'Mis Pedidos' },
+              { label: 'Mis Favoritos' },
+              { label: 'Direcciones' },
+              { label: 'Mis Cupones' },
+            ].map((item, i) => (
+              <div key={i} style={{ padding: '14px 18px', borderRadius: 14, background: item.active ? '#fdf2f4' : '#fff', border: item.active ? '1px solid #f0d0d8' : '1px solid rgba(200,80,106,.08)', fontFamily: "'Lato',sans-serif", color: '#2d1a10' }}>
+                {item.label}
+              </div>
+            ))}
+          </nav>
+          <button onClick={onLogout} style={{ marginTop: 28, width: '100%', padding: '14px 18px', background: '#c8506a', color: '#fff', border: 'none', borderRadius: 14, cursor: 'pointer', fontWeight: 700 }}>Cerrar sesión</button>
+        </aside>
+        <section style={{ background: '#fff', borderRadius: 22, padding: 32, boxShadow: '0 18px 45px rgba(200,80,106,.12)' }}>
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 30, color: '#2d1a10', marginBottom: 10 }}>INFORMACIÓN DE LA CUENTA</h2>
+            <div style={{ color: '#c8506a', letterSpacing: 3, fontSize: 14 }}>--- 🤍 ---</div>
+          </div>
+          {error && <div style={{ marginBottom: 18, color: '#a82a3f', fontWeight: 700 }}>{error}</div>}
+          {message && <div style={{ marginBottom: 18, color: '#2d6a32', fontWeight: 700 }}>{message}</div>}
+          <form onSubmit={handleSave} style={{ display: 'grid', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Nombre</label>
+                <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} required style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, outline: 'none' }} />
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Apellidos</label>
+                <input type="text" value={apellido} onChange={e => setApellido(e.target.value)} required style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Correo Electrónico</label>
+                <input type="email" value={correo} disabled style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, background: '#f7f2f4', color: '#7a4055' }} />
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Teléfono / Celular</label>
+                <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Contraseña Actual</label>
+                <input type="password" value={passwordActual} onChange={e => setPasswordActual(e.target.value)} placeholder="••••••••" style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, outline: 'none' }} />
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <label style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, color: '#7a4055' }}>Nueva Contraseña</label>
+                <input type="password" value={nuevaPassword} onChange={e => setNuevaPassword(e.target.value)} placeholder="Dejar en blanco si no deseas cambiarla" style={{ border: '1px solid #f0d0d8', borderRadius: 12, padding: '12px 14px', fontSize: 14, outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="scr-btn-primary" style={{ minWidth: 160 }}>{loading ? 'Guardando...' : 'GUARDAR CAMBIOS'}</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 // ─── PRODUCTOS ───────────────────────────────────────────
 function Productos({ setPage }) {
   const [wishlist, setWishlist] = useState([]);
@@ -543,12 +842,87 @@ function Ofertas() {
   );
 }
 
+function Nosotros() {
+  return (
+    <>
+      <section style={{ background: "#fff0f2", padding: "48px 24px", borderBottom: "1px solid #f0d0d8" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 32, alignItems: "center" }}>
+          <div>
+            <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 42, color: "#2d1a10", marginBottom: 16 }}>Contáctanos</h1>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 28, color: "#7a4055", marginBottom: 18 }}>¡Ven a conocernos y endulza tu día!</h2>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 16, color: "#5a3040", lineHeight: 1.8 }}>Siempre estamos felices de recibirte y atenderte. A continuación te dejamos toda la información para que nos encuentres fácil y rápido:</p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <img src={cupcakecorazon} alt="Cupcakes Sweet Cream Rose" style={{ width: "100%", maxWidth: 520, borderRadius: 18, boxShadow: "0 18px 40px rgba(200,80,106,.18)" }} />
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: "#fff", padding: "48px 24px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 24, gridTemplateColumns: "repeat(2,1fr)" }}>
+          <div style={{ background: "#fff", borderRadius: 18, padding: 28, boxShadow: "0 14px 32px rgba(200,80,106,.08)" }}>
+            <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, color: "#2d1a10", marginBottom: 16 }}>Nuestra Sucursal</h3>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 15, color: "#5a3040", lineHeight: 1.8, marginBottom: 20 }}>Larcomar<br />Mal. de la Reserva 610, Miraflores 15074</p>
+            <div style={{ borderRadius: 14, overflow: "hidden", marginBottom: 18 }}>
+              <img src={mapa} alt="Ubicación en el mapa" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            </div>
+            <a href="https://maps.app.goo.gl/f1KiFD5F15MLFb358" target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 46, padding: "0 24px", background: "#c8506a", color: "#fff", fontFamily: "'Lato',sans-serif", fontWeight: 700, textDecoration: "none", borderRadius: 10 }}>Cómo llegar</a>
+          </div>
+
+          <div style={{ background: "#fff", borderRadius: 18, padding: 28, boxShadow: "0 14px 32px rgba(200,80,106,.08)" }}>
+            <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, color: "#2d1a10", marginBottom: 16 }}>Horarios y Contacto</h3>
+            <ul style={{ fontFamily: "'Lato',sans-serif", fontSize: 15, color: "#5a3040", lineHeight: 1.8, marginBottom: 22, paddingLeft: 20 }}>
+              <li style={{ marginBottom: 10 }}>Lunes a Sábado de 9:00 am - 8:00 pm</li>
+              <li>Domingo de 9:00 am - 4:00 pm</li>
+            </ul>
+            <div style={{ marginBottom: 18, color: "#5a3040" }}>
+              <p style={{ marginBottom: 12 }}><i className="fa-solid fa-phone" style={{ marginRight: 10, color: "#c8506a" }}></i>81 1234 5678</p>
+              <p><i className="fa-solid fa-envelope" style={{ marginRight: 10, color: "#c8506a" }}></i>info@SweetCreamRose.com</p>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {['fa-facebook-f','fa-instagram','fa-whatsapp'].map((icon,i) => (
+                <a key={i} href="#" style={{ width: 42, height: 42, borderRadius: 50, background: "#fdf2f4", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#c8506a", textDecoration: "none" }}><i className={`fa-brands ${icon}`}></i></a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: "#fff0f2", padding: "48px 24px", borderTop: "1px solid #f0d0d8" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 32, alignItems: "center" }}>
+          <div style={{ background: "#fff", borderRadius: 18, padding: 28, boxShadow: "0 14px 32px rgba(200,80,106,.08)" }}>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 32, color: "#2d1a10", marginBottom: 16 }}>Déjanos un mensaje</h2>
+            <p style={{ fontFamily: "'Lato',sans-serif", fontSize: 15, color: "#5a3040", lineHeight: 1.8, marginBottom: 22 }}>¿Tienes alguna pregunta o sugerencia? Completa el formulario y te responderemos lo más pronto posible.</p>
+            <form onSubmit={e => e.preventDefault()} style={{ display: "grid", gap: 18 }}>
+              <div style={{ display: "grid", gap: 8 }}>
+                <label htmlFor="user-name" style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, fontWeight: 700, color: "#7a4055" }}>Nombre</label>
+                <input id="user-name" type="text" placeholder="Escribe tu nombre completo" required style={{ width: "100%", border: "1px solid #f0d0d8", borderRadius: 10, padding: "12px 14px", fontFamily: "'Lato',sans-serif", fontSize: 14, outline: "none" }} />
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                <label htmlFor="user-message" style={{ fontFamily: "'Lato',sans-serif", fontSize: 13, fontWeight: 700, color: "#7a4055" }}>Mensaje</label>
+                <textarea id="user-message" placeholder="Mensaje" rows={6} required style={{ width: "100%", border: "1px solid #f0d0d8", borderRadius: 10, padding: "12px 14px", fontFamily: "'Lato',sans-serif", fontSize: 14, outline: "none", resize: "vertical" }}></textarea>
+              </div>
+              <button type="submit" className="scr-btn-primary" style={{ width: "fit-content" }}>ENVIAR</button>
+            </form>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <img src={mapa} alt="Cupcake Ilustración" style={{ width: "100%", maxWidth: 460, borderRadius: 18, objectFit: "cover" }} />
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
 // ─── ROOT APP ────────────────────────────────────────────
 export default function App() {
+  const [user, setUser] = useState(getStoredUser());
   const [page, setPage] = useState("inicio");
   const [cartCount] = useState(2);
 
   const navigateTo = p => { setPage(p); window.scrollTo({ top:0, behavior:"smooth" }); };
+  const handleLogout = () => { localStorage.removeItem('usuario'); setUser(null); navigateTo('login'); };
+  const handleUpdateUser = updated => setUser(updated);
 
   return (
     <div style={{ fontFamily:"'Playfair Display','Georgia',serif", background:"#fff", color:"#2d1a10", minHeight:"100vh" }}>
@@ -556,17 +930,15 @@ export default function App() {
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       <style>{globalCSS}</style>
 
-      <Header page={page} setPage={navigateTo} cartCount={cartCount} />
+      <Header page={page} setPage={navigateTo} cartCount={cartCount} user={user} />
 
       {page === "inicio"    && <Inicio    setPage={navigateTo} />}
       {page === "productos" && <Productos setPage={navigateTo} />}
       {page === "ofertas"   && <Ofertas   setPage={navigateTo} />}
-      {page === "nosotros"  && (
-        <div style={{ minHeight:400, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16 }}>
-          <p style={{ fontFamily:"'Playfair Display',serif", fontSize:22, color:"#c8506a" }}>Página en construcción 🍰</p>
-          <button className="scr-btn-outline" onClick={() => navigateTo("inicio")}>Volver al inicio</button>
-        </div>
-      )}
+      {page === "nosotros"  && <Nosotros />}
+      {page === "login"     && <LoginPage onLoginSuccess={setUser} setPage={navigateTo} />}
+      {page === "registro"  && <RegisterPage setPage={navigateTo} />}
+      {page === "perfil"    && <PerfilPage user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />}
 
       <Footer setPage={navigateTo} />
     </div>

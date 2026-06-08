@@ -25,6 +25,13 @@ public class Usuario {
     @Column(name = "usuContrasena")
     private String password;
 
+    @Column(name = "usuResetCode")
+    private String passwordResetCode;
+
+    @Column(name = "usuResetExpiry")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date passwordResetExpiry;
+
     @Column(name = "usuTelefono")
     private String telefono;
 
@@ -67,6 +74,10 @@ public class Usuario {
     public void setCorreo(String correo) { this.correo = correo; }
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+    public String getPasswordResetCode() { return passwordResetCode; }
+    public void setPasswordResetCode(String passwordResetCode) { this.passwordResetCode = passwordResetCode; }
+    public Date getPasswordResetExpiry() { return passwordResetExpiry; }
+    public void setPasswordResetExpiry(Date passwordResetExpiry) { this.passwordResetExpiry = passwordResetExpiry; }
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getDireccion() { return direccion; }
