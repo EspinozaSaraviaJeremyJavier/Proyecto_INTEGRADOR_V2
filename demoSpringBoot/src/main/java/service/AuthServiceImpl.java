@@ -1,4 +1,4 @@
-package Service;
+package service;
 
 import Modelo.Usuario;
 import DAO.UsuarioDAO;
